@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1788284331",
+    "project_id": "ritchat-9674f",
+    "storage_bucket": "ritchat-9674f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1788284331:android:de3afb161edfb7217056ee",
+        "android_client_info": {
+          "package_name": "com.example.ritchat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmD0mb1-9jHvfZna48jnvmckNo9WbJ1ow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1788284331:android:b1cb3c39e40d4ec17056ee",
+        "android_client_info": {
+          "package_name": "ritchat.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmD0mb1-9jHvfZna48jnvmckNo9WbJ1ow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

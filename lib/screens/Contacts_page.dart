@@ -32,7 +32,7 @@ class ContactsPage extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: ListTile(
                       onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatPage(userID: currentModal)));
+                        Navigator.push(context, MaterialPageRoute(builder: (context)  => ChatPage(userID: currentModal)));
                       },
                       leading: CircleAvatar(
                         radius: 25,

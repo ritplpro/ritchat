@@ -1,8 +1,6 @@
 
 
 
-import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,7 +14,7 @@ class Firebaseintialize{
   static final FirebaseAuth firebaseAuth=FirebaseAuth.instance;
 
   static final FirebaseFirestore firestore=FirebaseFirestore.instance;
-  
+
    static const Collection_User="user";
   static const Collection_ChatRoom="ChatRoom";
   static const Collection_Messages="messages";
@@ -40,7 +38,7 @@ class Firebaseintialize{
 
     }catch(e){
       throw(Exception("Error:$e"));
-      
+
     }
   }
 
@@ -71,7 +69,7 @@ class Firebaseintialize{
     return firestore.collection(Collection_User).get();
   }
 //// send msg function
-  static   getFromid() async {
+  static Future<String?>  getFromid() async {
     var prefs=await SharedPreferences.getInstance();
      return prefs.getString(Prefs_Set_UID);
 
@@ -79,8 +77,10 @@ class Firebaseintialize{
 
   static  getSendid({required String fromID,required String toid}) async {
    if(fromID.hashCode <= toid.hashCode){
+     print(" this is if ${fromID}_$toid");
      return "${fromID}_$toid";
    }else{
+     print("this is else ${toid}_$fromID");
      return "${toid}_$fromID";
    }
 
@@ -89,7 +89,8 @@ class Firebaseintialize{
   static Future<void>  sendTextMessages({required String toid,required String msg}) async {
    var fromID=await  getFromid();
    var currtime=DateTime.now().millisecondsSinceEpoch.toString();
-   var chatID=await getSendid(fromID: fromID, toid: toid);
+   var chatID=await getSendid(fromID: fromID!, toid: toid);
+   print(" this is chat id ${chatID}");
    var messageModal=MessageModal(
        msgId:currtime,
        msg: msg,
@@ -99,16 +100,17 @@ class Firebaseintialize{
 
    firestore.collection(Collection_ChatRoom).doc(chatID)
        .collection(Collection_Messages).doc(currtime).set(messageModal.toDoc());
-   
-   
-   
+
+
+
   }
 
 
   static  sendImageMessages({required String toid,String imgmsg="",String msg="" }) async {
     var fromID=await  getFromid();
     var currtime=DateTime.now().millisecondsSinceEpoch.toString();
-    var chatID=await getSendid(fromID: fromID, toid: toid);
+    var chatID=await getSendid(fromID: fromID!, toid: toid);
+    print(" this is chat id ${chatID}");
     var messageModal=MessageModal(
         msgId:currtime,
         msg:msg,
@@ -125,15 +127,16 @@ class Firebaseintialize{
 
   }
 
+/*
 
-  static Stream<QuerySnapshot<Map<String, dynamic>>> getChatStream({required String fromid,required String toID}){
-
-    var chatid = getSendid(fromID: fromid, toid: toID);
-    return firestore.collection(Collection_ChatRoom).doc(chatid.toString()).collection(Collection_Messages).snapshots();
-
+  static Future<Stream<QuerySnapshot<Map<String, dynamic>>>> getChatStream({required String fromid,required String toID}) async {
+    String Chat_ID = await getSendid(fromID: fromid, toid: toID);
+    return firestore.collection(Collection_ChatRoom).doc(Chat_ID).collection(Collection_Messages).snapshots();
   }
+*/
 
-
-
+  static Future<Stream<QuerySnapshot<Map<String, dynamic>>>> getChatStream({required String fromid, required String toID}) async {
+    var chatID = await getSendid(fromID: fromid, toid: toID); // Assuming getSendid is an async function
+     return firestore.collection(Collection_ChatRoom).doc(chatID).collection(Collection_Messages).snapshots(); }
 
 }

@@ -5,8 +5,31 @@ import '../firebase/firebase.dart';
 import '../modal/user_modal.dart';
 import 'Chat_page.dart';
 
-class ContactsPage extends StatelessWidget {
+class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
+
+  @override
+  State<ContactsPage> createState() => _ContactsPageState();
+}
+
+class _ContactsPageState extends State<ContactsPage> {
+
+  var fromId="";
+  @override
+  void initState() {
+    super.initState();
+    getFromid();
+  }
+
+  Future<void> getFromid() async {
+     fromId =(await Firebaseintialize.getFromid())!;
+    setState(() {
+
+    });
+
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +44,14 @@ class ContactsPage extends StatelessWidget {
         }else if(snapshot.hasError){
           return Center(child: Text(snapshot.error.toString()));
         }else if(snapshot.hasData){
+          var listcontacts=List.generate(snapshot.data!.docs.length, (index){
+            return UserModal.fromMap(snapshot.data!.docs[index].data());
+          });
+          listcontacts.removeWhere((element)=>element.userid==fromId);
           return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
+            itemCount: listcontacts.length,
               itemBuilder: (context,index){
-              var currentModal=UserModal.fromMap(snapshot.data!.docs[index].data());
+              var currentModal=listcontacts[index];
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: Card(

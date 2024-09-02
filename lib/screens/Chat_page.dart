@@ -1,6 +1,5 @@
 
 
-import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -21,28 +20,20 @@ class _ChatPageState extends State<ChatPage> {
   List<MessageModal> listMsg=[];
   DateFormat dtetime=DateFormat.Hm();
   var fromid="";
-  var msgController=TextEditingController();
+  final msgController=TextEditingController();
 
 
   @override
   void initState() {
     super.initState();
     intializechatRoom();
-    setState(() {
-
-    });
-/*
-
-
-    listMsg.add(MessageModal(msg:widget.userID!.userid,msgType: 0,sentAt: DateTime.now().millisecondsSinceEpoch.toString(),));
-    listMsg.add(MessageModal(msg:widget.userID!.userid,msgType: 1,sentAt: DateTime.now().millisecondsSinceEpoch.toString(),));
-*/
 
   }
 
-  intializechatRoom() async {
-    var formid=await Firebaseintialize.getFromid();
-    Firebaseintialize.getChatStream(fromid: formid!, toID:widget.userID!.userid!);
+  Future<void> intializechatRoom() async {
+     fromid=(await Firebaseintialize.getFromid())!;
+    setState((){   });
+
 
   }
 
@@ -53,147 +44,88 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title:Row(
           children: [
-            CircleAvatar(),
+            CircleAvatar(
+              //child: Image.network(widget.userID!.profilePic!),
+            ),
             SizedBox(width: 5,),
-            Text(widget.userID!.name.toString())
+            Column(
+              children: [
+                Text(widget.userID!.name.toString()),
+                widget.userID!.isOnline == false ? Text("Offline..",style: TextStyle(fontSize: 10),) :Text("Online..",style: TextStyle(fontSize: 10),)
+              ],
+            )
           ],
         ),
 
+
       ),
       body:Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<Stream<QuerySnapshot<Map<String, dynamic>>>>(
-              future: Firebaseintialize.getChatStream(fromid: fromid, toID: widget.userID!.userid!),
-              builder: (context, futureSnapshot) {
-                if (!futureSnapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
-            
-                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: futureSnapshot.data!,
-                  builder: (context, streamSnapshot) {
-                    if (!streamSnapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-            
-                    var docs = streamSnapshot.data!.docs;
-                    listMsg = docs.map((doc) => MessageModal.fromDoc(doc.data())).toList();
-            
-                    return ListView.builder(
-                      itemCount: listMsg.length,
-                      shrinkWrap: true,
-                      reverse: true,
-                      itemBuilder: (context, index) {
-                        // return Text('hii');
-                        return listMsg[index].fromId == fromid
-                            ? rightMessageBubble(listMsg[index])
-                            : leftChatBox(listMsg[index]);
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          SizedBox(height: 15,),
-          // body: Column(
-          //   children: [
-          //     /*Expanded(
-          //         child:StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
-          //             stream: Firebaseintialize.getChatStream(fromid: fromid, toID: widget.userID!.userid!) as Stream<QuerySnapshot<Map<String, dynamic>>>,
-          //             builder:(context,snapshot){
-          //               // print(snapshot.data!.docs);
-          //           if(snapshot.connectionState==ConnectionState.waiting){
-          //             return Center(child: CircularProgressIndicator());
-          //           }
-          //
-          //           listMsg = List.generate(snapshot.data!.docs.length,(index)=> MessageModal.fromDoc(snapshot.data!.docs[index].data()));
-          //
-          //          // print('this is message model ${MessageModal.fromDoc(snapshot.data!.docs[1].data())}');
-          //           print('list of msg ${listMsg.length}');
-          //
-          //           return ListView.builder(itemCount: listMsg.length,
-          //               shrinkWrap: true,
-          //               reverse: true,
-          //               itemBuilder: (context,index){
-          //             return listMsg[index].fromId == fromid ?  rightMessageBubble(listMsg[index]): leftChatBox(listMsg[index]);
-          //           });
-          //         })),*/
-          //
-          //
-          //
-          //
-          //
-          //
-          //   ],
-          // ),
-          TextField(
-            autofocus: true,
-            enableSuggestions: true,
-            controller: msgController,
-            decoration: InputDecoration(
-                prefixIcon: IconButton(onPressed: (){},icon: Icon(Icons.mic,),),
-                suffixIcon:  IconButton(onPressed: (){
-                  Firebaseintialize.sendTextMessages(toid:widget.userID!.userid!, msg:msgController.text);
+             children: [
+               Expanded(
+                 child: StreamBuilder<QuerySnapshot>(
+                   stream:Firebaseintialize.getChatStream(
+                     fromid: fromid,
+                     toID: widget.userID!.userid ?? '',
+                   ),
+                   builder: (context, snapshot) {
+                     if (snapshot.connectionState == ConnectionState.waiting) {
+                       return const Center(child: CircularProgressIndicator());
+                     }
+                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                       return const Center(child: Text("No messages yet"));
+                     }
 
-                  msgController.clear();
+                     listMsg = snapshot.data!.docs
+                         .map((doc) => MessageModal.fromDoc(
+                         doc.data() as Map<String, dynamic>))
+                         .toList();
 
-                },icon: Icon(Icons.send),),
-                fillColor:Theme.of(context).colorScheme.onPrimary,
-                filled: true,
-                hintText: "message...",
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15)
-                )
-            ),
+                     // Sort messages by timestamp in descending order
+                     listMsg.sort((a, b) => int.parse(b.sentAt ?? '0')
+                         .compareTo(int.parse(a.sentAt ?? '0')));
 
-          ),
-          
+                     return ListView.builder(
+                       itemCount: listMsg.length,
+                       reverse: true,
+                       itemBuilder: (context, index) {
+                         return listMsg[index].fromId == fromid
+                             ? rightMessageBubble(listMsg[index])
+                             : leftMessageBubble(listMsg[index]);
+                       },
+                     );
+                   },
+                 ),
+               ),
+
+               TextField(
+                 autofocus: true,
+                 enableSuggestions: true,
+                 controller: msgController,
+                 decoration: InputDecoration(
+                     prefixIcon: IconButton(onPressed: (){},icon: Icon(Icons.mic,),),
+                     suffixIcon:  IconButton(onPressed: (){
+                       Firebaseintialize.sendTextMessages(toid:widget.userID!.userid!, msg:msgController.text);
+
+                       msgController.clear();
+
+                     },icon: Icon(Icons.send),),
+                     fillColor:Theme.of(context).colorScheme.onPrimary,
+                     filled: true,
+                     hintText: "message...",
+                     border: OutlineInputBorder(
+                         borderRadius: BorderRadius.circular(15)
+                     )
+                 ),
+
+               ),
 
 
-        ],
-      )
-    );
+             ],
+           ),
+      );
+
   }
 
-  Widget leftChatBox(MessageModal msgModal){
-  var  dtime=dtetime.format(DateTime.fromMillisecondsSinceEpoch(int.parse(msgModal.sentAt!)));
-    return Container(
-      padding: EdgeInsets.all(11.0),
-      margin: EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.only(
-            topRight: Radius.circular(11),
-            bottomRight: Radius.circular(11),
-            topLeft: Radius.circular(11)),
-      ),
-      child: Column(
-        children: [
-          Text("${msgModal.msg}",style: TextStyle(fontSize: 20),),
-          Text("${msgModal.sentAt}"),
-        ],
-      ),
-    );
-  }
-
-  Widget rightChatBox(MessageModal msgModal){
-    return Container(
-      padding: EdgeInsets.all(11.0),
-      margin: EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color:Theme.of(context).colorScheme.inversePrimary,
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(11)),
-      ),
-      child: Column(
-        children: [
-          Text("${msgModal.msg}",style: TextStyle(fontSize: 20)),
-          Text(msgModal.sentAt!),
-        ],
-      ),
-    );
-  }
 
   Widget rightMessageBubble(MessageModal msgmodal){
 
@@ -201,27 +133,48 @@ class _ChatPageState extends State<ChatPage> {
         DateTime.fromMillisecondsSinceEpoch(int.parse(msgmodal.sentAt!)));
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(sentTime.format(context)),
-        ),
         Flexible(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                margin: EdgeInsets.all(11),
-                padding: EdgeInsets.all(11),
-                decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(21),
-                        topRight: Radius.circular(21),
-                        bottomLeft: Radius.circular(21))),
-                child: msgmodal.msgType == 0 ? Text(msgmodal.msg!) : Image.network(msgmodal.imgUrl!),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    margin: EdgeInsets.all(11),
+                    padding: EdgeInsets.all(11),
+                    decoration: BoxDecoration(
+                        color: Colors.amber.shade100,
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(21),
+                            topRight: Radius.circular(21),
+                            bottomLeft: Radius.circular(21))),
+                    child: msgmodal.msgType == 0 ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(msgmodal.msg!,style: TextStyle(fontSize: 18),),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(sentTime.format(context),),
+                        )
+                      ],
+                    ) : Column(
+                      children: [
+                        Image.network(msgmodal.imgUrl!),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(sentTime.format(context)),
+                        )
+                      ],
+                    ),
+                  ),
+
+                ],
               ),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -241,19 +194,22 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
         ),
+
       ],
     );
   }
-/*
+
 
   Widget leftMessageBubble(MessageModal msgmodal){
+/*
 
     if(msgmodal.readAt==""){
       Firebaseintialize.updateReadStatus(fromId: widget.currUserId, toId: widget.eachUserId, mid: msg.mid!);
     }
+*/
 
     var sentTime = TimeOfDay.fromDateTime(
-        DateTime.fromMillisecondsSinceEpoch(int.parse(msg.sentAt!)));
+        DateTime.fromMillisecondsSinceEpoch(int.parse(msgmodal.sentAt!)));
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -268,23 +224,36 @@ class _ChatPageState extends State<ChatPage> {
                 decoration: BoxDecoration(
                     color: Colors.green.shade100,
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(21),
                         topRight: Radius.circular(21),
-                        bottomLeft: Radius.circular(21))),
-                child: msg.msgType == 0 ? Text(msg.txtMsg) : Image.network(msg.imgUrl!),
+                        topLeft: Radius.circular(21),
+                        bottomRight: Radius.circular(21))),
+                child: msgmodal.msgType == 0 ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(msgmodal.msg!),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(sentTime.format(context)),
+                    )
+                  ],
+                ) : Column(
+                  children: [
+                    Image.network(msgmodal.imgUrl!),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(sentTime.format(context)),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(sentTime.format(context)),
-        ),
+
 
       ],
     );
   }
 
-*/
 
 }

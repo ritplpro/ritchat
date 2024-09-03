@@ -80,7 +80,7 @@ class LoginPage extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.deepOrange,
                   content:Text(state.errormsg,style: TextStyle(fontSize: 18),)));
                 }else if (state is LoginSucessState){
-                  Navigator.push(context,MaterialPageRoute(builder: (context)=>MyHomePage()));
+                  Navigator.pushReplacement(context,MaterialPageRoute(builder: (context)=>MyHomePage()));
                 }
 
                 }

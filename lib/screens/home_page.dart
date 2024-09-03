@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:ritchat/modal/message_modal.dart';
 import 'package:ritchat/modal/user_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,8 +18,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-  var fromid="";
+  var fromid = "";
 
   @override
   void initState() {
@@ -27,11 +28,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> getFromid() async {
-    fromid=(await Firebaseintialize.getFromid())!;
-    setState(() {
-
-    });
+    fromid = (await Firebaseintialize.getFromid())!;
+    setState(() {});
   }
+/*
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(future: getUserid(),
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          if (!snapshot.hasData) return Container(); // still loading
+          // alternatively use snapshot.connectionState != ConnectionState.done
+          final String userID = snapshot.data;
+          ...
+          // return a widget here (you have to return a widget to the builder)
+        });
+  }*/
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -39,63 +52,107 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text("Re-chat"),
         actions: [
-          PopupMenuButton(child: Icon(Icons.more_vert),
-              itemBuilder: (contexxt){
-            return [
-              PopupMenuItem(onTap: () async {
-                //logout_session
-                var prefs=await SharedPreferences.getInstance();
-                prefs.setString(Firebaseintialize.Prefs_Set_UID,"");
-                Navigator.push(context,MaterialPageRoute(builder: (context)=>LoginPage()));},
-                  child: Text("Logout")),];
-          }),
-
-
-
+          PopupMenuButton(
+              child: Icon(Icons.more_vert),
+              itemBuilder: (contexxt) {
+                return [
+                  PopupMenuItem(
+                      onTap: () async {
+                        //logout_session
+                        var prefs = await SharedPreferences.getInstance();
+                        prefs.setString(Firebaseintialize.Prefs_Set_UID, "");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => LoginPage()));
+                      },
+                      child: Text("Logout")),
+                ];
+              }),
         ],
       ),
-      body:StreamBuilder<QuerySnapshot>(
-        stream:Firebaseintialize.getHomeChatContactStream(fromid: fromid),
-        builder: (context, snapshot){
+      body: StreamBuilder<QuerySnapshot>(
+        stream: Firebaseintialize.getHomeChatContactStream(fromid: fromid),
+        builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          }else if(snapshot.hasError){
+          } else if (snapshot.hasError) {
             return Center(child: Text("error${snapshot.error}"));
-          }else if(snapshot.hasData){
-    var listUserID=List.generate(snapshot.data!.docs.length,(index){
-    var mdata=snapshot.data!.docs[index].get("ids") as List<dynamic>;
-    mdata.removeWhere((element)=> element==fromid);
-    return mdata[0];
-    });
-    print(" userformdd${listUserID.toString()}");
-    return ListView.builder(itemCount:listUserID.length,
-    itemBuilder: (context,index){
-    return FutureBuilder(future:Firebaseintialize.getHomeChatContactStreamUserID(UserId: listUserID[index]),
-    builder: (context,usersnap){
-    var currentModal=UserModal.fromMap(usersnap.data!.data()!);
-    return Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: Card(
-    child: Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: ListTile(
-    onTap: (){
-    Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(userID: currentModal)));
-    },
-    leading: CircleAvatar(
-    radius: 25,
-    backgroundImage: currentModal.profilePic != null ? NetworkImage(currentModal.profilePic!):AssetImage("assets/images/avtors.png"),
+          } else if (snapshot.hasData) {
+            var listUserID = List.generate(snapshot.data!.docs.length, (index) {
+              var mdata =
+                  snapshot.data!.docs[index].get("ids") as List<dynamic>;
+              return mdata[0];
+            });
 
-    ),
-    title: Text(currentModal.name!),
-    subtitle: Text(currentModal.email!),),)),);
-    });
-    });
-    }return Container();},),
+            return ListView.builder(
+                itemCount: listUserID.length,
+                itemBuilder: (context, index) {
+                  return FutureBuilder(
+                      future: Firebaseintialize.getHomeChatContactStreamUserID(
+                          UserId: listUserID[index]),
+                      builder: (context, usersnap) {
+                        if(usersnap.hasData){
+                          var currentModal = UserModal.fromMap(usersnap.data!.data()!);
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ListTile(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ChatPage(userID: currentModal)));
+                                    },
+                                    leading: CircleAvatar(
+                                      radius: 25,
+                                      backgroundImage: currentModal.profilePic != null
+                                          ? NetworkImage(currentModal.profilePic!)
+                                          : AssetImage("assets/images/avtors.png"),
+                                    ),
+                                    title: Text(currentModal.name!),
+                                    subtitle:StreamBuilder(
+                                        stream:Firebaseintialize.getLastmsg(fromid:fromid, toID:currentModal.userid!),
+                                        builder: (context,lastmsgsnapshot){
+                                          if(lastmsgsnapshot.hasData){
+                                            var lastmsg=MessageModal.fromDoc(lastmsgsnapshot.data!.docs[0].data());
+                                            return lastmsg.fromId == fromid ? Text(lastmsg.msg!):
+                                            Row(
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets.only(right: 8.0),
+                                                  child: Icon(Icons.done_all_outlined,
+                                                    color: lastmsg.readAt!= "" ? Colors.blue : Colors.grey,),
+                                                ),
+                                                Text(lastmsg.msg!),
+                                              ],
+                                            );
+                                          }
+                                          return Text(currentModal.email!);
+
+                                        })
+                                  ),
+                                )),
+                          );
+                        }
+                        return Container();
+                      });
+                });
+          }
+          return Container();
+        },
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
-      floatingActionButton: FloatingActionButton(onPressed: (){
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>ContactsPage()));
-      },child: Icon(Icons.add),),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => ContactsPage()));
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 }

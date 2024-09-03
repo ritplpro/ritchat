@@ -1,6 +1,8 @@
 
 
 
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -139,58 +141,50 @@ class _ChatPageState extends State<ChatPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    margin: EdgeInsets.all(11),
-                    padding: EdgeInsets.all(11),
-                    decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(21),
-                            topRight: Radius.circular(21),
-                            bottomLeft: Radius.circular(21))),
-                    child: msgmodal.msgType == 0 ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+              Container(
+                margin: EdgeInsets.all(11),
+                padding: EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(21),
+                        topRight: Radius.circular(21),
+                        bottomLeft: Radius.circular(21))),
+                child: msgmodal.msgType == 0 ? Column(
+                  children: [
+                    Text(msgmodal.msg!,style: TextStyle(fontSize: 15),),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text(msgmodal.msg!,style: TextStyle(fontSize: 18),),
+                        Text(sentTime.format(context),),
+                        /*
+                                    Visibility(visible: msgmodal.readAt!="",
+                    child: Text(msgmodal.readAt=="" ? "" : TimeOfDay.fromDateTime(
+                        DateTime.fromMillisecondsSinceEpoch(int.parse(msgmodal.readAt!))).format(context).toString())),
+                                    */  //visibility time on
+                        SizedBox(
+                          width: 7,
+                        ),
                         Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(sentTime.format(context),),
-                        )
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(Icons.done_all_outlined,
+                            color: msgmodal.readAt!= "" ? Colors.blue : Colors.grey,),
+                        ),
                       ],
-                    ) : Column(
-                      children: [
-                        Image.network(msgmodal.imgUrl!),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(sentTime.format(context)),
-                        )
-                      ],
-                    ),
-                  ),
-
-                ],
+                    )
+                  ],
+                ) : Column(
+                  children: [
+                    Image.network(msgmodal.imgUrl!),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(sentTime.format(context)),
+                    )
+                  ],
+                ),
               ),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Visibility(visible: msgmodal.readAt!="",
-                      child: Text(msgmodal.readAt=="" ? "" : TimeOfDay.fromDateTime(
-                          DateTime.fromMillisecondsSinceEpoch(int.parse(msgmodal.readAt!))).format(context).toString())),
-                  SizedBox(
-                    width: 7,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.done_all_outlined,
-                      color: msgmodal.readAt!= "" ? Colors.blue : Colors.grey,),
-                  ),
-                ],
-              )
+          
+          
             ],
           ),
         ),
@@ -201,12 +195,10 @@ class _ChatPageState extends State<ChatPage> {
 
 
   Widget leftMessageBubble(MessageModal msgmodal){
-/*
 
-    if(msgmodal.readAt==""){
-      Firebaseintialize.updateReadStatus(fromId: widget.currUserId, toId: widget.eachUserId, mid: msg.mid!);
+    if(msgmodal.readAt ==""){
+      Firebaseintialize.updateReadStatus(msgID:msgmodal.msgId!, fromid: fromid, toID:widget.userID!.userid!);
     }
-*/
 
     var sentTime = TimeOfDay.fromDateTime(
         DateTime.fromMillisecondsSinceEpoch(int.parse(msgmodal.sentAt!)));

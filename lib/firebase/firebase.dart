@@ -1,6 +1,7 @@
 
 
 
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -19,7 +20,7 @@ class Firebaseintialize{
   static const Collection_ChatRoom="ChatRoom";
   static const Collection_Messages="messages";
   static const Prefs_Set_UID="userId";
-  static const home_IDs="ids";
+
 
 
   createUser({required UserModal user, required String password}) async {
@@ -103,8 +104,9 @@ class Firebaseintialize{
    await firestore.collection(Collection_ChatRoom).doc(chatID)
        .collection(Collection_Messages).doc(currtime).set(messageModal.toDoc());
 
-   await firestore.collection(Collection_ChatRoom).doc(home_IDs)
-       .collection(fromID).doc(chatID);
+   
+   ///ids 
+   await firestore.collection(Collection_ChatRoom).doc(chatID).set({'ids': ["${toid}","${fromID}"]});
 
   }
 
@@ -113,7 +115,6 @@ class Firebaseintialize{
     var fromID=await  getFromid();
     var currtime=DateTime.now().millisecondsSinceEpoch.toString();
     var chatID=await getSendid(fromID: fromID!, toid: toid);
-    print(" this is chat id ${chatID}");
     var messageModal=MessageModal(
         msgId:currtime,
         msg:msg,
@@ -140,9 +141,8 @@ class Firebaseintialize{
 
 
 
-
   static Stream<QuerySnapshot<Map<String, dynamic>>> getHomeChatContactStream({required String fromid}) {
-    return firestore.collection(Collection_ChatRoom).where("ids",arrayContains: fromid).snapshots();
+    return firestore.collection(Collection_ChatRoom).where("ids",arrayContains:fromid).snapshots();
 
   }
 
@@ -155,7 +155,20 @@ class Firebaseintialize{
   }
 
 
+ static Future<void> updateReadStatus({required String  msgID,required String fromid, required String toID}) async {
+   var currtime=DateTime.now().millisecondsSinceEpoch.toString();
+   var chatID=await getSendid(fromID: fromid, toid: toID);
+   firestore.collection(Collection_ChatRoom).doc(chatID).collection(Collection_Messages).doc(msgID).update(
+       {"readAt": currtime});
 
 
+ }
+
+
+
+ static Stream<QuerySnapshot<Map<String, dynamic>>> getLastmsg({required String fromid, required String toID}) {
+   var chatID= getSendid(fromID: fromid, toid: toID)as String;
+   return  firestore.collection(Collection_ChatRoom).doc(chatID).collection(Collection_Messages).orderBy("sentAt",descending: true).limit(1).snapshots();
+ }//  this is last update
 
 }

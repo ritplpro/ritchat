@@ -2,6 +2,8 @@
 
 
 
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -166,9 +168,14 @@ class Firebaseintialize{
 
 
 
- static Stream<QuerySnapshot<Map<String, dynamic>>> getLastmsg({required String fromid, required String toID}) {
-   var chatID= getSendid(fromID: fromid, toid: toID)as String;
-   return  firestore.collection(Collection_ChatRoom).doc(chatID).collection(Collection_Messages).orderBy("sentAt",descending: true).limit(1).snapshots();
- }//  this is last update
+ static  Stream<QuerySnapshot<Map<String, dynamic>>> getLastmsg({required String fromid, required String toID})   {
+   var chatID=getSendid(fromID: fromid, toid: toID) ;
+       return firestore.collection(Collection_ChatRoom).doc(chatID.toString()).collection(Collection_Messages).orderBy("1725605540171",descending: true).limit(1).snapshots();
+ }//
+
+
+
+
+// this is last update
 
 }

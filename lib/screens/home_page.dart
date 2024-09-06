@@ -25,25 +25,23 @@ class _MyHomePageState extends State<MyHomePage> {
     // TODO: implement initState
     super.initState();
     getFromid();
+
   }
 
   Future<void> getFromid() async {
     fromid = (await Firebaseintialize.getFromid())!;
+    Firebaseintialize.getLastmsg(fromid: fromid, toID: "_U2u7O7E9TUf7I4Mu0ZD13XUTJv03").listen((snapshot){for(var doc in snapshot.docs){
+      print(doc.data());
+    }});
+
     setState(() {});
   }
-/*
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(future: getUserid(),
-        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-          if (!snapshot.hasData) return Container(); // still loading
-          // alternatively use snapshot.connectionState != ConnectionState.done
-          final String userID = snapshot.data;
-          ...
-          // return a widget here (you have to return a widget to the builder)
-        });
-  }*/
 
+  void getLstMss(String userid){
+    Firebaseintialize.getLastmsg(fromid: fromid, toID: userid!).listen((snapshot){for(var doc in snapshot.docs){
+      print(doc.data());
+    }});
+  }
 
 
   @override
@@ -71,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
               }),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: StreamBuilder(
         stream: Firebaseintialize.getHomeChatContactStream(fromid: fromid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -114,24 +112,37 @@ class _MyHomePageState extends State<MyHomePage> {
                                           : AssetImage("assets/images/avtors.png"),
                                     ),
                                     title: Text(currentModal.name!),
-                                    subtitle:StreamBuilder(
+                                    subtitle:StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
                                         stream:Firebaseintialize.getLastmsg(fromid:fromid, toID:currentModal.userid!),
                                         builder: (context,lastmsgsnapshot){
-                                          if(lastmsgsnapshot.hasData){
-                                            var lastmsg=MessageModal.fromDoc(lastmsgsnapshot.data!.docs[0].data());
-                                            return lastmsg.fromId == fromid ? Text(lastmsg.msg!):
-                                            Row(
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.only(right: 8.0),
-                                                  child: Icon(Icons.done_all_outlined,
-                                                    color: lastmsg.readAt!= "" ? Colors.blue : Colors.grey,),
-                                                ),
-                                                Text(lastmsg.msg!),
-                                              ],
-                                            );
+
+                                          if(lastmsgsnapshot.hasData) {
+
+
+                                            if(lastmsgsnapshot.data!.docs.isEmpty){
+
+
+
+
+                                              return Text('No Last MSg!!');
+                                            }
+                                            else{
+                                              var lastmsg = MessageModal.fromDoc(lastmsgsnapshot.data!.docs[0].data() as Map<String,dynamic>);
+                                              return lastmsg.fromId == fromid ? Text(lastmsg.msg!) : Text('no msg');
+                                            }
+
+                                            // Row(
+                                            //   children: [
+                                            //     Padding(
+                                            //       padding: const EdgeInsets.only(right: 8.0),
+                                            //       child: Icon(Icons.done_all_outlined,
+                                            //         color: lastmsg.readAt!= "" ? Colors.blue : Colors.grey,),
+                                            //     ),
+                                            //     Text(lastmsg.msg!),
+                                            //   ],
+                                            // );
                                           }
-                                          return Text(currentModal.email!);
+                                          return Text('no chats avlaible  ');
 
                                         })
                                   ),

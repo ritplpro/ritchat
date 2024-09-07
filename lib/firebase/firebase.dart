@@ -79,7 +79,7 @@ class Firebaseintialize{
 
   }
 
-  static Future<String>  getSendid({required String fromID,required String toid}) async {
+  static String  getSendid({required String fromID,required String toid}) {
    if(fromID.hashCode <= toid.hashCode){
      return "${fromID}_$toid";
    }else{
@@ -169,8 +169,8 @@ class Firebaseintialize{
 
 
  static  Stream<QuerySnapshot<Map<String, dynamic>>> getLastmsg({required String fromid, required String toID})   {
-   var chatID=getSendid(fromID: fromid, toid: toID) ;
-       return firestore.collection(Collection_ChatRoom).doc(chatID.toString()).collection(Collection_Messages).orderBy("1725605540171",descending: true).limit(1).snapshots();
+   var chatID=getSendid(fromID: fromid, toid: toID);
+       return firestore.collection(Collection_ChatRoom).doc(chatID).collection(Collection_Messages).orderBy(FieldPath.documentId,descending: true).limit(1).snapshots();
  }//
 
 

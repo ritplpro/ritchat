@@ -30,18 +30,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> getFromid() async {
     fromid = (await Firebaseintialize.getFromid())!;
-    Firebaseintialize.getLastmsg(fromid: fromid, toID: "_U2u7O7E9TUf7I4Mu0ZD13XUTJv03").listen((snapshot){for(var doc in snapshot.docs){
-      print(doc.data());
-    }});
-
     setState(() {});
   }
+/*
 
   void getLstMss(String userid){
     Firebaseintialize.getLastmsg(fromid: fromid, toID: userid!).listen((snapshot){for(var doc in snapshot.docs){
       print(doc.data());
     }});
   }
+*/
 
 
   @override
@@ -115,32 +113,20 @@ class _MyHomePageState extends State<MyHomePage> {
                                     subtitle:StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
                                         stream:Firebaseintialize.getLastmsg(fromid:fromid, toID:currentModal.userid!),
                                         builder: (context,lastmsgsnapshot){
+                                          if(lastmsgsnapshot.connectionState==ConnectionState.waiting){
+                                            return Text("no last msg ...");
+                                          }else if(lastmsgsnapshot.hasError){
+                                            print(lastmsgsnapshot.hasError.toString());
+                                            return Text("msg loading failed");
+                                          }else if(lastmsgsnapshot.hasData){
+                                            print(lastmsgsnapshot.hasData.toString());
 
-                                          if(lastmsgsnapshot.hasData) {
-
-
-                                            if(lastmsgsnapshot.data!.docs.isEmpty){
-
-
-
-
-                                              return Text('No Last MSg!!');
+                                            if (lastmsgsnapshot.data!.docs.isEmpty) {
+                                              return Text('No Last Msg!!');
+                                            } else {
+                                            var lastmsg = MessageModal.fromDoc(lastmsgsnapshot.data!.docs[0].data()as Map<String, dynamic>);
+                                            return lastmsg.fromId==fromid ? Text(lastmsg.msg ?? 'No message content'):Text("nnnn");
                                             }
-                                            else{
-                                              var lastmsg = MessageModal.fromDoc(lastmsgsnapshot.data!.docs[0].data() as Map<String,dynamic>);
-                                              return lastmsg.fromId == fromid ? Text(lastmsg.msg!) : Text('no msg');
-                                            }
-
-                                            // Row(
-                                            //   children: [
-                                            //     Padding(
-                                            //       padding: const EdgeInsets.only(right: 8.0),
-                                            //       child: Icon(Icons.done_all_outlined,
-                                            //         color: lastmsg.readAt!= "" ? Colors.blue : Colors.grey,),
-                                            //     ),
-                                            //     Text(lastmsg.msg!),
-                                            //   ],
-                                            // );
                                           }
                                           return Text('no chats avlaible  ');
 
